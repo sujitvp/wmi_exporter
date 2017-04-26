@@ -8,6 +8,7 @@ import (
 
 	"github.com/StackExchange/wmi"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/sujitvp/wmi_exporter/conf"
 )
 
 func init() {

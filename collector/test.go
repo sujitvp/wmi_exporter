@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/sujitvp/wmi_exporter/conf"
 )
 
 const testSubsystem = "test"

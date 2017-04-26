@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/Knetic/govaluate"
+	"github.com/sujitvp/wmi_exporter/conf"
 )
 
 var functions map[string]govaluate.ExpressionFunction

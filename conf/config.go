@@ -13,7 +13,10 @@ import (
 )
 
 var traceConfig = tracey.Options{
-	DisableTracing: true,
+	DisableTracing:        true,
+	EnableInstrumentation: true,
+	DisableNesting:        false,
+	DisableDepthValue:     false,
 }
 
 //Trace provides the global entry point for tracing method calls

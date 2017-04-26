@@ -54,6 +54,7 @@ func (coll WmiCollector) Collect(ch chan<- prometheus.Metric) {
 	wg.Add(len(coll.collectors))
 	for name, c := range coll.collectors {
 		go func(name string, c collector.Collector) {
+			defer conf.Trace("collection thread")()
 			execute(name, c, ch)
 			wg.Done()
 		}(name, c)
@@ -145,6 +146,7 @@ func main() {
 	if conf.UCMConfig.AwsTagsToLabels.Enabled {
 		ticker := time.NewTicker(time.Duration(conf.UCMConfig.AwsTagsToLabels.RefreshPeriod) * time.Second)
 		go func() {
+			defer conf.Trace("AWS Tag refresh")()
 			for {
 				select {
 				case <-ticker.C:
@@ -169,6 +171,7 @@ func main() {
 
 	// adding handler for SIGINT
 	go func() {
+		defer conf.Trace("SIGINT monitor")()
 		sigchan := make(chan os.Signal, 10)
 		signal.Notify(sigchan, os.Interrupt)
 		<-sigchan
@@ -202,6 +205,7 @@ func main() {
 	defer utils.DeRegister()
 
 	go func() {
+		defer conf.Trace("Http listener")()
 		log.Infoln("Starting server on", conf.UCMConfig.Service.GetAddress())
 		if err := http.ListenAndServe(conf.UCMConfig.Service.GetAddress(), nil); err != nil {
 			log.Fatalf("cannot start WMI exporter: %s", err)
