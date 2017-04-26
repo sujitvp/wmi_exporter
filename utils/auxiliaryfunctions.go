@@ -6,8 +6,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/sujitvp/go-tracey"
-
 	"strconv"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -19,7 +17,6 @@ import (
 	"github.com/sujitvp/wmi_exporter/conf"
 )
 
-var trace = tracey.New(&conf.TraceConfig)
 var hostname string
 var hostip []string
 var labels map[string]string
@@ -31,7 +28,7 @@ var TagLabelNames []string
 var TagLabelValues []string
 
 func init() {
-	defer trace()()
+	defer conf.Trace()()
 	var err error
 	hostname, err = os.Hostname()
 	if err != nil {
@@ -59,7 +56,7 @@ func init() {
 
 // Register the wmi_exporter service from the consul endpoint
 func Register() {
-	defer trace()()
+	defer conf.Trace()()
 	if !conf.UCMConfig.ServiceDiscovery.Enabled {
 		return
 	}
@@ -105,7 +102,7 @@ func Register() {
 
 // DeRegister the wmi_exporter service from the consul endpoint
 func DeRegister() {
-	defer trace()()
+	defer conf.Trace()()
 	if !conf.UCMConfig.ServiceDiscovery.Enabled {
 		return
 	}
@@ -135,7 +132,7 @@ func DeRegister() {
 
 // TagsToLabels converts the currently cached tags into Prometheus Labels. It does not refresh the tags.
 func getTagLabels() ([]string, []string) {
-	defer trace()()
+	defer conf.Trace()()
 	var ntags []string
 	var vtags []string
 	if conf.UCMConfig.AwsTagsToLabels.Enabled {
@@ -149,7 +146,7 @@ func getTagLabels() ([]string, []string) {
 }
 
 func getTagLabelValues(ntags []string) []string {
-	defer trace()()
+	defer conf.Trace()()
 	var vtags []string
 	if conf.UCMConfig.AwsTagsToLabels.Enabled {
 		tags := processTagLabelMap(labels, conf.UCMConfig.MetadataReporting.Attributes)
@@ -161,7 +158,7 @@ func getTagLabelValues(ntags []string) []string {
 }
 
 func metadataToTags() []string {
-	defer trace()()
+	defer conf.Trace()()
 	var ntags []string
 	if conf.UCMConfig.MetadataReporting.Enabled {
 		//fetch AWS Metadata and initialize it for registration tagging, if requested
@@ -174,7 +171,7 @@ func metadataToTags() []string {
 }
 
 func processTagLabelMap(m map[string]string, tagmap []conf.TagLabelMap) map[string]string {
-	defer trace()()
+	defer conf.Trace()()
 	t := make(map[string]string)
 	for _, attr := range tagmap {
 		if len(attr.TagName) > 1 {
@@ -200,7 +197,7 @@ func processTagLabelMap(m map[string]string, tagmap []conf.TagLabelMap) map[stri
 
 // FetchAWSMetadata gets the instance metadata and primes the tag array, so these can be used for consul registration and metric labeling
 func FetchAWSMetadata() {
-	defer trace()()
+	defer conf.Trace()()
 	//get EC2 metadata
 	sess := session.Must(session.NewSession(&aws.Config{
 		Region: aws.String(conf.UCMConfig.MetadataReporting.AWSRegion),
@@ -239,7 +236,7 @@ func FetchAWSMetadata() {
 
 // FetchAWSLabelTags ...
 func FetchAWSLabelTags() {
-	defer trace()()
+	defer conf.Trace()()
 	if conf.UCMConfig.AwsTagsToLabels.Enabled && labels == nil {
 		//get EC2 metadata
 		sess := session.Must(session.NewSession(&aws.Config{

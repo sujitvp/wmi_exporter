@@ -7,60 +7,93 @@ import (
     "github.com/StackExchange/wmi"
     "github.com/prometheus/client_golang/prometheus"
 )
-const {{ .CollectorName | toLower }}Subsystem = "{{ .CollectorName | toLower }}"
+const {{ .CollectorName }}Subsystem = "{{ .CollectorName | toLower }}"
 func init() {
-    Factories[{{ .CollectorName | toLower }}Subsystem] = {{ .CollectorName }}TemplateCollector
+    Factories[{{ .CollectorName }}Subsystem] = {{ .CollectorName }}TemplateCollector
 }
 
-// New{{ .CollectorName }}Collector ...
-func New{{ .CollectorName }}Collector() (Collector, error) {
-    const subsystem = "{{ .CollectorName | toLower }}"
-    return &{{ .CollectorName }}Collector{
+// {{ .CollectorName }}TemplateCollector ...
+func {{ .CollectorName }}TemplateCollector() (Collector, error) {
+    defer trace()()
+    return NewTemplateCollector({{ .CollectorName }}Subsystem, &{{ .CollectorName }}Collector)
+}
+
+func (c *{{ .CollectorName }}Collector) getMetricDesc(m map[string]*prometheus.Desc) error {
+    defer trace()()
 {{- range $m := .Members }}
-        {{ $m.Name }}: prometheus.NewDesc(
-            prometheus.BuildFQName(Namespace, subsystem, "{{ $m.Name | toSnakeCase }}"),
+        m["{{ $m.Name | toSnakeCase }}"] = prometheus.NewDesc(
+            prometheus.BuildFQName(Namespace, {{ .CollectorName }}Subsystem, "{{ $m.Name | toSnakeCase }}"),
             "({{ $m.Name }})",
+            GetLabelNames("lbl"),
             nil,
-            nil,
-        ),
+        )
 {{- end }}
-    }, nil
+    return nil
 }
 
 // A {{ .CollectorName }}Collector is a Prometheus collector for WMI {{ .Class }} metrics
 type {{ .CollectorName }}Collector struct {
-{{- range $m := .Members }}
-    {{ $m.Name }} *prometheus.Desc
-{{- end }}
+    lobj map[string]{{ .Class }}
 }
 
-// Collect sends the metric values for each metric
-// to the provided prometheus Metric channel.
-func (c *{{ .CollectorName }}Collector) Collect(ch chan<- prometheus.Metric) error {
-    if desc, err := c.collect(ch); err != nil {
-        log.Println("[ERROR] failed collecting {{ .CollectorName | toLower }} metrics:", desc, err)
-        return err
-    }
-    return nil
-}
 type {{ .Class }} struct {
     Name string
 {{ range $m := .Members }}
     {{ $m.Name }} {{ $m.Type }}
 {{- end }}
 }
-func (c *{{ .CollectorName }}Collector) collect(ch chan<- prometheus.Metric) (*prometheus.Desc, error) {
+
+func (c *{{ .CollectorName }}Collector) collect(m map[string]*prometheus.Desc, ch chan<- prometheus.Metric) (CollectableTemplate, error) {
+    defer trace()()
+
     var dst []{{ .Class }}
     q := wmi.CreateQuery(&dst, "")
     if err := wmi.Query(q, &dst); err != nil {
         return nil, err
     }
-    {{ range $m := .Members }}
-    ch <- prometheus.MustNewConstMetric(
-        c.{{ $m.Name }},
-        prometheus.GaugeValue,
-        float64(dst[0].{{ $m.Name }}),
-    )
-    {{ end }}
+
+    for _, data:= range dst {
+        c.lobj[data.Name] = data
+        lbl := data.Name
+        {{ range $m := .Members }}
+        if _, ok := m["{{ $m.Name | toSnakeCase  }}"]; ok{
+            ch <- prometheus.MustNewConstMetric(
+                m["{{ $m.Name | toSnakeCase  }}"],
+                prometheus.GaugeValue,
+                float64(dst[0].{{ $m.Name }}),
+                GetLabelValues(lbl)...,
+            )
+        }
+        {{ end }}
+    }
     return nil, nil
+}
+
+func (c *{{ .CollectorName }}Collector) getValue(varname string) interface{} {
+    defer trace()()
+    name, m := ProcessVarName(varname)
+
+    lbl := m["lbl"]
+
+    if lbl == "" {
+        t := make([]interface{}, len(c.lobj))
+        i :=0
+        for k := range c.lobj{
+            t[i] = c.getCoreValue(name, k)
+            i++
+        }
+        return t
+    }
+    return c.getCoreValue(name, lbl)
+}
+
+func (c *{{ .CollectorName }}Collector) getCoreValue(varname, lbl string) interface{} {
+    defer trace()()
+    switch name {
+        {{ range $m := .Members }}
+        case "{{ $m.Name | toSnakeCase  }}":
+            return float64(c.lobj[lbl].{{ $m.Name | toSnakeCase  }})
+        {{ end }}
+    }
+    return 0.
 }

@@ -13,7 +13,7 @@ const testSubsystem = "test"
 var r *rand.Rand
 
 func init() {
-	defer trace()()
+	defer conf.Trace()()
 	Factories[testSubsystem] = TestTemplateCollector
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 }
@@ -30,12 +30,12 @@ type testMetrics struct {
 
 // TestTemplateCollector is a test collector to validate templated collection
 func TestTemplateCollector() (Collector, error) {
-	defer trace()()
+	defer conf.Trace()()
 	return NewTemplateCollector(testSubsystem, &testMetrics{})
 }
 
 func (c *testMetrics) getValue(name string) interface{} {
-	defer trace()()
+	defer conf.Trace()()
 	var t float64
 	switch name {
 	case "test1":
@@ -57,12 +57,12 @@ func (c *testMetrics) getValue(name string) interface{} {
 }
 
 func random() float64 {
-	defer trace()()
+	defer conf.Trace()()
 	return r.Float64() * 10
 }
 
 func (c *testMetrics) collect(m map[string]*prometheus.Desc, ch chan<- prometheus.Metric) (CollectableTemplate, error) {
-	defer trace()()
+	defer conf.Trace()()
 
 	//get the actual metric from somewhere
 	t := testMetrics{
@@ -139,7 +139,7 @@ func (c *testMetrics) collect(m map[string]*prometheus.Desc, ch chan<- prometheu
 }
 
 func (c *testMetrics) getMetricDesc(m map[string]*prometheus.Desc) error {
-	defer trace()()
+	defer conf.Trace()()
 	m["Test1"] = prometheus.NewDesc(
 		prometheus.BuildFQName(Namespace, testSubsystem, "test1"),
 		"Test Metric number 1",

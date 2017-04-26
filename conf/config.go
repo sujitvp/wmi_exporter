@@ -12,11 +12,12 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
-//TraceConfig provides the global config for tracing method calls
-var TraceConfig = tracey.Options{
+var traceConfig = tracey.Options{
 	DisableTracing: true,
 }
-var trace = tracey.New(&TraceConfig)
+
+//Trace provides the global entry point for tracing method calls
+var Trace = tracey.New(&traceConfig)
 
 // UCMConfig is the pre-loaded configuration for the service
 var UCMConfig ConfigurationParameters
@@ -117,19 +118,19 @@ type ServiceConf struct {
 
 // GetAddress returns a fully formatted host-port combination as needed for Consul Endpoint configuration, based on ip/fqdn and port entries made in config file
 func (c ConsulConf) GetAddress() string {
-	defer trace()()
+	defer Trace()()
 	return "http://" + c.RemoteEndpoint + ":" + strconv.Itoa(c.RemotePort)
 }
 
 // GetAddress returns a fully formatted host-port combination as needed for binding the service startup, based on ip/fqdn and port entries made in config file
 func (s ServiceConf) GetAddress() string {
-	defer trace()()
+	defer Trace()()
 	return s.ListenIP + ":" + strconv.Itoa(s.ListenPort)
 }
 
 // setAddress allows for setting the IP & Port for service binding based on command line params
 func (s ServiceConf) setAddress(addr string) {
-	defer trace()()
+	defer Trace()()
 	a := strings.Split(addr, ":")
 	s.ListenIP = a[0]
 	p, err := strconv.Atoi(a[1])
@@ -141,7 +142,7 @@ func (s ServiceConf) setAddress(addr string) {
 
 // InitializeFromConfig reads configuration parameters from configuration file and initializes this service
 func InitializeFromConfig(configfile string, listenAddress string, metricsPath string, enabledCollectors string) ConfigurationParameters {
-	defer trace()()
+	defer Trace()()
 	//	UCMConfig := ConfigurationParameters{}
 
 	if configfile != "" {

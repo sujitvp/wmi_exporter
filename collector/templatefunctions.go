@@ -9,7 +9,7 @@ import (
 var functions map[string]govaluate.ExpressionFunction
 
 func init() {
-	defer trace()()
+	defer conf.Trace()()
 	functions = map[string]govaluate.ExpressionFunction{
 		"sum":     sum,
 		"average": average,
@@ -20,7 +20,7 @@ func init() {
 }
 
 func sum(args ...interface{}) (interface{}, error) {
-	defer trace()()
+	defer conf.Trace()()
 	s := 0.
 	for _, x := range args {
 		switch x.(type) {
@@ -35,7 +35,7 @@ func sum(args ...interface{}) (interface{}, error) {
 }
 
 func average(args ...interface{}) (interface{}, error) {
-	defer trace()()
+	defer conf.Trace()()
 	s, _ := sum(args...)
 	c, _ := count(args...)
 
@@ -43,7 +43,7 @@ func average(args ...interface{}) (interface{}, error) {
 }
 
 func count(args ...interface{}) (interface{}, error) {
-	defer trace()()
+	defer conf.Trace()()
 	s := len(args)
 	for _, x := range args {
 		switch x.(type) {
@@ -56,7 +56,7 @@ func count(args ...interface{}) (interface{}, error) {
 }
 
 func max(args ...interface{}) (interface{}, error) {
-	defer trace()()
+	defer conf.Trace()()
 	s := 0.
 	for _, x := range args {
 		switch x.(type) {
@@ -71,7 +71,7 @@ func max(args ...interface{}) (interface{}, error) {
 }
 
 func min(args ...interface{}) (interface{}, error) {
-	defer trace()()
+	defer conf.Trace()()
 	s := 0.
 	for _, x := range args {
 		switch x.(type) {

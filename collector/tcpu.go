@@ -10,7 +10,7 @@ import (
 const tcpuSubsystem = "tcpu"
 
 func init() {
-	defer trace()()
+	defer conf.Trace()()
 	Factories[tcpuSubsystem] = cpuTemplateCollector
 }
 
@@ -40,12 +40,12 @@ type tCPUCollector struct {
 
 // TestTemplateCollector is a test collector to validate templated collection
 func cpuTemplateCollector() (Collector, error) {
-	defer trace()()
+	defer conf.Trace()()
 	return NewTemplateCollector(tcpuSubsystem, &tCPUCollector{})
 }
 
 func (c *tCPUCollector) getValue(varname string) interface{} {
-	defer trace()()
+	defer conf.Trace()()
 	name, m := ProcessVarName(varname)
 
 	core := m["core"]
@@ -65,7 +65,7 @@ func (c *tCPUCollector) getValue(varname string) interface{} {
 }
 
 func (c *tCPUCollector) getCoreValue(name, core, mode, state string) interface{} {
-	defer trace()()
+	defer conf.Trace()()
 	switch name {
 	case "C1TransitionsPersec":
 		return float64(c.lmap[core].C1TransitionsPersec)
@@ -133,7 +133,7 @@ func (c *tCPUCollector) getCoreValue(name, core, mode, state string) interface{}
 }
 
 func (c *tCPUCollector) getMetricDesc(m map[string]*prometheus.Desc) error {
-	defer trace()()
+	defer conf.Trace()()
 	m["cstate_seconds_total"] = prometheus.NewDesc(
 		prometheus.BuildFQName(Namespace, tcpuSubsystem, "cstate_seconds_total"),
 		"Time spent in low-power idle state",
@@ -201,7 +201,7 @@ type Win32_PerfRawData_Counters_ProcessorInformation struct {
 }*/
 
 func (c *tCPUCollector) collect(m map[string]*prometheus.Desc, ch chan<- prometheus.Metric) (CollectableTemplate, error) {
-	defer trace()()
+	defer conf.Trace()()
 	var dst []Win32_PerfFormattedData_PerfOS_Processor
 	q := wmi.CreateQuery(&dst, "")
 	if err := wmi.Query(q, &dst); err != nil {

@@ -13,7 +13,7 @@ import (
 
 //NewTemplateCollector ...
 func NewTemplateCollector(subsystem string, t CollectableTemplate) (Collector, error) {
-	defer trace()()
+	defer conf.Trace()()
 	coll := TemplateCollector{
 		metricDescList: make(map[string]*prometheus.Desc),
 		metricExprList: make(map[string]*govaluate.EvaluableExpression),
@@ -55,7 +55,7 @@ type TemplateCollector struct {
 // Collect sends the metric values for each metric
 // to the provided prometheus Metric channel.
 func (c *TemplateCollector) Collect(ch chan<- prometheus.Metric) error {
-	defer trace()()
+	defer conf.Trace()()
 
 	//populate with any built-in metrics
 	ct, _ := c.tobj.collect(c.metricDescList, ch)
@@ -74,18 +74,18 @@ func (c *TemplateCollector) Collect(ch chan<- prometheus.Metric) error {
 
 // GetLabelNames builds Label names with configured labels from tags and metric-specific labels
 func GetLabelNames(m ...string) []string {
-	defer trace()()
+	defer conf.Trace()()
 	return append(utils.TagLabelNames, m...)
 }
 
 // GetLabelValues builds label values with configured labels from tags and metric-specific labels
 func GetLabelValues(m ...string) []string {
-	defer trace()()
+	defer conf.Trace()()
 	return append(utils.TagLabelValues, m...)
 }
 
 func getType(m string) prometheus.ValueType {
-	defer trace()()
+	defer conf.Trace()()
 	t := prometheus.GaugeValue
 	switch m {
 	case "Gauge":
@@ -97,7 +97,7 @@ func getType(m string) prometheus.ValueType {
 }
 
 func compute(t CollectableTemplate, m conf.MetricMap, e *govaluate.EvaluableExpression) float64 {
-	defer trace()()
+	defer conf.Trace()()
 	log.Debugf("compute: %s, %s", m.ExportName, m.ComputeLogic)
 	//process
 	if m.ComputedMetric {
@@ -119,7 +119,7 @@ func compute(t CollectableTemplate, m conf.MetricMap, e *govaluate.EvaluableExpr
 
 //ProcessVarName processes a varname to return the metric and its labels
 func ProcessVarName(name string) (string, map[string]string) {
-	defer trace()()
+	defer conf.Trace()()
 	n := strings.Split(name, ".")
 	m := make(map[string]string)
 	var v []string

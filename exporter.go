@@ -11,8 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sujitvp/go-tracey"
-
 	"golang.org/x/sys/windows/svc"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -22,8 +20,6 @@ import (
 	"github.com/sujitvp/wmi_exporter/conf"
 	"github.com/sujitvp/wmi_exporter/utils"
 )
-
-var trace = tracey.New(&conf.TraceConfig)
 
 // WmiCollector implements the prometheus.Collector interface.
 type WmiCollector struct {
@@ -45,7 +41,7 @@ var (
 // Describe sends all the descriptors of the collectors included to
 // the provided channel.
 func (coll WmiCollector) Describe(ch chan<- *prometheus.Desc) {
-	defer trace()()
+	defer conf.Trace()()
 	scrapeDurations.Describe(ch)
 }
 
@@ -53,7 +49,7 @@ func (coll WmiCollector) Describe(ch chan<- *prometheus.Desc) {
 // prometheus. Collect could be called several times concurrently
 // and thus its run is protected by a single mutex.
 func (coll WmiCollector) Collect(ch chan<- prometheus.Metric) {
-	defer trace()()
+	defer conf.Trace()()
 	wg := sync.WaitGroup{}
 	wg.Add(len(coll.collectors))
 	for name, c := range coll.collectors {
@@ -67,7 +63,7 @@ func (coll WmiCollector) Collect(ch chan<- prometheus.Metric) {
 }
 
 func execute(name string, c collector.Collector, ch chan<- prometheus.Metric) {
-	defer trace()()
+	defer conf.Trace()()
 	begin := time.Now()
 	err := c.Collect(ch)
 	duration := time.Since(begin)
@@ -84,7 +80,7 @@ func execute(name string, c collector.Collector, ch chan<- prometheus.Metric) {
 }
 
 func loadCollectors(coll map[string]conf.CollectorSpec) (map[string]collector.Collector, error) {
-	defer trace()()
+	defer conf.Trace()()
 	collectors := map[string]collector.Collector{}
 
 	// remove any unsupported collectors
@@ -104,12 +100,12 @@ func loadCollectors(coll map[string]conf.CollectorSpec) (map[string]collector.Co
 }
 
 func init() {
-	defer trace()()
+	defer conf.Trace()()
 	prometheus.MustRegister(version.NewCollector("wmi_exporter"))
 }
 
 func main() {
-	defer trace()()
+	defer conf.Trace()()
 	var (
 		showVersion       = flag.Bool("version", false, "Print version information.")
 		printCollectors   = flag.Bool("collectors.print", false, "If true, print available collectors and exit.")
@@ -223,13 +219,13 @@ func main() {
 }
 
 func healthCheck(w http.ResponseWriter, r *http.Request) {
-	defer trace()()
+	defer conf.Trace()()
 	w.Header().Set("Content-Type", "application/json")
 	io.WriteString(w, `{"status":"ok"}`)
 }
 
 func keys(m map[string]collector.Collector) []string {
-	defer trace()()
+	defer conf.Trace()()
 	ret := make([]string, 0, len(m))
 	for key := range m {
 		ret = append(ret, key)
@@ -242,7 +238,7 @@ type wmiExporterService struct {
 }
 
 func (s *wmiExporterService) Execute(args []string, r <-chan svc.ChangeRequest, changes chan<- svc.Status) (ssec bool, errno uint32) {
-	defer trace()()
+	defer conf.Trace()()
 	const cmdsAccepted = svc.AcceptStop | svc.AcceptShutdown
 	changes <- svc.Status{State: svc.StartPending}
 	changes <- svc.Status{State: svc.Running, Accepts: cmdsAccepted}
